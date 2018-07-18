@@ -14,8 +14,11 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import confusion_matrix
 from sklearn.externals import joblib
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import AdaBoostClassifier
+
+
 nLetras   = 4
-n_mfcc    = 12
+n_mfcc    = 40
 
 def rotuloGrupo(rotulo):
     if ('a'  in rotulo) or ('b' in rotulo)  or ('d' in rotulo):
@@ -66,35 +69,44 @@ for arquivo in listdir():
         retorno = SegmentarAudio(audio,fs,nLetras,tamanho,tempo)
         nItens = nItens + 1
         print(nItens)
+        filtro = librosa.filters.mel(22050, 2048, fmax=8000)
         for i in range(0,nLetras):
-             S       = np.abs(librosa.stft(retorno[i,]))
+             S       = np.abs(librosa.stft(retorno[i,],hop_length=128))**2
              y_harm, y_per = librosa.effects.hpss(retorno[i,])
+             
              #p2      = librosa.feature.poly_features(S=S, order=2)
              #atr1    = librosa.feature.chroma_stft(y=retorno[i,], sr=fs).T
-             mfcc1   =  librosa.feature.mfcc(y_harm, sr=fs, n_mfcc=n_mfcc).T
+             mfcc1   =  librosa.feature.mfcc(y_harm, sr=fs, n_mfcc=n_mfcc,hop_length=256).T
              #atr1    = scaler.fit_transform(mfcc1)
              mfcc2   =  librosa.feature.mfcc(y_per, sr=fs, n_mfcc=n_mfcc).T
+             #mel     = librosa.feature.melspectrogram(S=S)
+             
              #atr2    = scaler.fit_transform(mfcc2)
-             chrm1   = librosa.feature.chroma_stft(y=retorno[i,], sr=fs).T
-             t = np.concatenate([mfcc1,chrm1])
-             atr1    = scaler.fit_transform(t)
+             #chrm1   = librosa.feature.chroma_stft(y=retorno[i,], sr=fs).T
+             #t = np.concatenate([mfcc1,mfcc2])
+
+             #t = np.concatenate([mel)
+             atr1    = scaler.fit_transform(mfcc1)
              #print(atr1.shape)
              atributos.append(atr1)
-             #rotulos=rotulos+[(arquivo[i])]*len(atr1)
-             rotulos=rotulos+[rotuloGrupo(arquivo[i])]*len(atr1)
+             rotulos=rotulos+[(arquivo[i])]*len(atr1)
+             #rotulos=rotulos+[rotuloGrupo(arquivo[i])]*len(atr1)
 
 atributos = np.vstack((atributos))
 rotulos   = np.array(rotulos)
 #Naive Bayses
 #gnb = GaussianNB()
 #model = sklearn.ensemble.GradientBoostingClassifier() #OVA(one vs all)
-model = RandomForestClassifier(n_estimators=10)
+model = RandomForestClassifier(n_estimators=10,criterion="entropy")
+#model = AdaBoostClassifier(n_estimators=100)
 model.fit(atributos, rotulos)
+
+print(model.get_params(deep=True))
 
 
 
 #Testa
-os.chdir('base_validacao_I')
+os.chdir('base_validacao_I2')
 
 
 scaler = sklearn.preprocessing.StandardScaler()
@@ -104,47 +116,55 @@ nAudios   = 0
 nAcertos  = 0
 nErros    = 0 
 nItens    = 0
-pred      = []
-vdd       = []
+pred      = list()
 for arquivo in listdir():
-    if 'wav' in arquivo: 
+    if 'wav' in arquivo:
+        nItens = nItens + 1 
+        nAudios = nAudios + 4
         print("Novo")
-        print(nErros)
         print(nAcertos)
+        print(nAudios)
+
         audio, fs = librosa.load(arquivo,None)
         tamanho = audio.shape[0]
         tempo   = audio.shape[0]/fs
         retorno = SegmentarAudio(audio,fs,nLetras,tamanho,tempo)
-        nAudios = nAudios + 4
-        nItens = nItens + 1
+        
+        
         print(nItens)
         for i in range(0,nLetras):
-             S       = np.abs(librosa.stft(retorno[i,]))
+             S       = np.abs(librosa.stft(retorno[i,],hop_length=128))**2
              y_harm, y_per = librosa.effects.hpss(retorno[i,])
              #p2      = librosa.feature.poly_features(S=S, order=2)
              #mfcc   =  librosa.feature.mfcc(retorno[i,], sr=fs, n_mfcc=n_mfcc).T
              #atr1    = librosa.feature.chroma_stft(y=retorno[i,], sr=fs).T
-             mfcc1   =  librosa.feature.mfcc(y_harm, sr=fs, n_mfcc=n_mfcc).T
+             mfcc1   =  librosa.feature.mfcc(y_harm, sr=fs, n_mfcc=n_mfcc,hop_length=256).T
              #atr1    = scaler.fit_transform(mfcc1)
              mfcc2   =  librosa.feature.mfcc(y_per, sr=fs, n_mfcc=n_mfcc).T
+             #mel     = librosa.feature.melspectrogram(S=S)
+             
              #atr2    = scaler.fit_transform(mfcc2)
-             chrm1   = librosa.feature.chroma_stft(y=retorno[i,], sr=fs).T
-             t = np.concatenate([mfcc1,chrm1])
-             atr1    = scaler.fit_transform(t)
+             #chrm1   = librosa.feature.chroma_stft(y=retorno[i,], sr=fs).T
+             #t = np.concatenate(mfcc1)
+     
+             #t = np.concatenate([mel])
+             atr1    = scaler.fit_transform(mfcc1)
 
              pred    = model.predict(atr1)   
              (values,counts) = np.unique(pred,return_counts=True)
              ind = np.argmax(counts)
              #vdd = np.append(vdd,(arquivo[i],values[ind]))
-             if values[ind] == rotuloGrupo(arquivo[i]):
-             #if values[ind] == arquivo[i]:
+             #if values[ind] == rotuloGrupo(arquivo[i]):
+             v1 = values[ind] 
+             v2 = arquivo[i]
+             if values[ind] == arquivo[i]:
                 nAcertos = nAcertos + 1
                 print("ACERTOU")
              else:
                 nErros = nErros + 1
                 print("ERROU")
-                print(arquivo[i])
-                print(values[ind])
+                #print(arquivo[i])
+                #print(values[ind])
 
 print(nAudios)
 print(nAcertos)
@@ -153,6 +173,8 @@ print(nErros)
 _ = joblib.dump(model, 'modelo_FT_Grupo.bb', compress=9)
 
 #BASELINE
+# 70.6%, diminui o frame para 256, 415
+# 71.2% frame = 128
 #---------------------------------------------------------------------------------------------------------------------
 #TESTE1 -> NB + CHROMA_STFT        12.8% [90/702]
 #TESTE2 -> NB + MFCC               12.8% [90/702]
@@ -160,7 +182,13 @@ _ = joblib.dump(model, 'modelo_FT_Grupo.bb', compress=9)
 #TESTE5 ->GradientBoostingClassifier + CHROMA_STFT 14.39% [114/792]
 #TESTE7 ->RandomForestClassifier     + MFCC        56.18% [445/792] 
 #TESTE7 ->RandomForestClassifier     + MFCC[h/p]   57.19% [453/792] 
+#TESTE6 ->RandomForestClassifier     + MFCC[h/p]nMFCC=20 57.70% [457/792]
+#TESTE6 ->RandomForestClassifier     + MFCC[h/p]nMFCC=20 68.70% [404/588] *NOVA BASE
+#TESTE6 ->RandomForestClassifier     + MFCC[h/p]nMFCC=20 69.00% [406/588] *NOVA BASE *ENTROPIA.
+#TESTE6 ->RandomForestClassifier     + MFCC[h/p]nMFCC=20 21.90% [129/588] *NOVA BASE *ENTROPIA.p2
 #---------------------------------------------------------------------------------------------------------------------
 #TESTE6 ->GradientBoostingClassifier + MFCC 69.82% [553/792] [GRUPOS]
 #TESTE6 ->RandomForestClassifier     + MFCC 77.39% [613/792] [GRUPOS]
 #TESTE6 ->RandomForestClassifier     + MFCC[h/p] 79.92% [633/792] [GRUPOS]
+#TESTE6 ->RandomForestClassifier     + MFCC[h]+CHROMA_STFT 71.59% [567/792] [GRUPOS]
+#TESTE6 ->RandomForestClassifier     + MFCC[h/p]nMFCC=20 80.43% [637/792] [GRUPOS]
