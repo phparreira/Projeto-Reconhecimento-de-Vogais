@@ -18,7 +18,7 @@ from sklearn.ensemble import AdaBoostClassifier
 
 
 nLetras   = 4
-n_mfcc    = 40
+n_mfcc    = 128
 
 def rotuloGrupo(rotulo):
     if ('a'  in rotulo) or ('b' in rotulo)  or ('d' in rotulo):
@@ -76,7 +76,7 @@ for arquivo in listdir():
              
              #p2      = librosa.feature.poly_features(S=S, order=2)
              #atr1    = librosa.feature.chroma_stft(y=retorno[i,], sr=fs).T
-             mfcc1   =  librosa.feature.mfcc(y_harm, sr=fs, n_mfcc=n_mfcc,hop_length=256).T
+             mfcc1   =  librosa.feature.mfcc(y_harm, sr=fs, n_mfcc=n_mfcc,hop_length=128).T
              #atr1    = scaler.fit_transform(mfcc1)
              mfcc2   =  librosa.feature.mfcc(y_per, sr=fs, n_mfcc=n_mfcc).T
              #mel     = librosa.feature.melspectrogram(S=S)
@@ -138,7 +138,7 @@ for arquivo in listdir():
              #p2      = librosa.feature.poly_features(S=S, order=2)
              #mfcc   =  librosa.feature.mfcc(retorno[i,], sr=fs, n_mfcc=n_mfcc).T
              #atr1    = librosa.feature.chroma_stft(y=retorno[i,], sr=fs).T
-             mfcc1   =  librosa.feature.mfcc(y_harm, sr=fs, n_mfcc=n_mfcc,hop_length=256).T
+             mfcc1   =  librosa.feature.mfcc(y_harm, sr=fs, n_mfcc=n_mfcc,hop_length=128).T
              #atr1    = scaler.fit_transform(mfcc1)
              mfcc2   =  librosa.feature.mfcc(y_per, sr=fs, n_mfcc=n_mfcc).T
              #mel     = librosa.feature.melspectrogram(S=S)
